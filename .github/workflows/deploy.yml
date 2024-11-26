@@ -29,16 +29,15 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          service_account_key: ${{ secrets.GCP_SA_KEYS }}
 
-      - name: Authorize Docker pushs
+      - name: Authorize Docker push
         run: gcloud auth configure-docker
 
       - name: Build and Push Container
         run: |
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:${{ github.sha }} -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:latest .
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:${{ github.sha }} .
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:${{ github.sha }}
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:latest
 
       # Deploy the container to Google Cloud Run
       - name: Deploy to Cloud Run
