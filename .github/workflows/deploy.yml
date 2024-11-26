@@ -31,7 +31,7 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Authorize Docker push
+      - name: Authorize Docker pushs
         run: gcloud auth configure-docker
 
       - name: Build and Push Container
