@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS invalidated_tokens (
     invalidated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 INSERT INTO special_ability (special_ability) VALUES
 ('Membaca dasar'),
 ('Menulis sederhana'),
