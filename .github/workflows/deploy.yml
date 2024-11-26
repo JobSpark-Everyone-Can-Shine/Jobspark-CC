@@ -30,21 +30,21 @@ jobs:
     # Step 4: Build the Docker image
     - name: Build Docker image
       run: |
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/express-app .
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api .
 
     # Step 5: Authenticate with Google Cloud and push the Docker image to Google Container Registry
     - name: Push Docker image to Google Container Registry
       run: |
         echo ${{ secrets.GCP_SA_KEY }} | docker login -u _json_key --password-stdin https://gcr.io
-        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/express-app
+        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api
 
     # Step 6: Deploy the Docker image to Google Cloud Run
     - name: Deploy to Google Cloud Run
       run: |
         gcloud auth activate-service-account --key-file <(echo ${{ secrets.GCP_SA_KEY }})
         gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-        gcloud run deploy express-app \
-          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/express-app \
+        gcloud run deploy jobspark-api \
+          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api \
           --platform managed \
           --region us-central1 \
           --allow-unauthenticated
