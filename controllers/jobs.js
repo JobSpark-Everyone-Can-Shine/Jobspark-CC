@@ -89,7 +89,6 @@ async function applyJob(req, res) {
       return handleFailed(res, "Job not found", 404);
     }
 
-    console.log(1)
 
     const existingApplication = await pool.query(
       "SELECT * FROM job_history WHERE user_id = $1 AND jobs_id = $2",
@@ -99,7 +98,6 @@ async function applyJob(req, res) {
     if (existingApplication.rows.length > 0) {
       return handleFailed(res, "You have already applied to this job", 400);
     }
-    console.log(2)
 
 
     await pool.query(

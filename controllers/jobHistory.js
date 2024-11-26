@@ -1,20 +1,21 @@
 const { handleSuccess, handleFailed } = require("../utils/helper");
 const pool = require("../models/db");
 
-async function getHJobHist(res) {
+async function getHJobHist(req,res) {
     try {
-        const job_history = await pool.query('SELECT * FROM job_history');
+        const job_history = await pool.query('SELECT a.id, a.status, a.applied_at, b.job_name, b.image, b.company_name, b.location, b.position, b.job_type, b.salary FROM job_history a inner join jobs b on a.jobs_id = b.id');
         const jobHistories = job_history.rows;
-        res.status(200).json(jobHistories);
+        handleSuccess(res, jobHistories);
       } catch (error) {
-        res.status(500).json({ message: 'Error retrieving job history', error });
+        console.error(error.message);
+        return handleFailed(res);
       }
   }
 
   async function getJoHistbDetail(req, res) {
     try {
       const id = req.params.id;
-      const job_history = await pool.query("SELECT * FROM job_history where id = $1", [id]);
+      const job_history = await pool.query("SELECT a.id, a.status, a.applied_at, b.job_name, b.image, b.company_name, b.location, b.position, b.job_type, b.salary FROM job_history a inner join jobs b on a.jobs_id = b.id WHERE a.id = $1", [id]);
   
       if (job_history.rows.length === 0) {
         return handleFailed(res, "Job History Not Found", 404, {});

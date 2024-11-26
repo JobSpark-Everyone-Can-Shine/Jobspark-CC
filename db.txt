@@ -84,7 +84,7 @@ CREATE TABLE saved_jobs (
     id SERIAL PRIMARY KEY,
     jobs_id INT,
     user_id INT,
-    FOREIGN KEY (saved_jobs) REFERENCES jobs(id),
+    FOREIGN KEY (jobs_id) REFERENCES jobs(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -93,3 +93,67 @@ CREATE TABLE IF NOT EXISTS invalidated_tokens (
     user_id INTEGER REFERENCES users(id),
     invalidated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+INSERT INTO special_ability (special_ability) VALUES
+('Membaca dasar'),
+('Menulis sederhana'),
+('Mendengarkan instruksi'),
+('Berbicara dengan orang lain'),
+('Kerja tim'),
+('Ketelitian'),
+('Koordinasi tangan dan mata'),
+('Kesabaran'),
+('Kreativitas'),
+('Mengikuti langkah-langkah sederhana'),
+('Menggunakan alat sederhana'),
+('Pemecahan masalah sederhana'),
+('Mandiri dengan supervisi'),
+('Menjaga kebersihan'),
+('Mengatur waktu'),
+('Ketahanan fisik ringan');
+
+INSERT INTO health_condition (health_condition) VALUES
+('Menggunakan kursi roda'),
+('Membutuhkan kacamata'),
+('Menggunakan alat bantu dengar'),
+('Kesulitan berdiri terlalu lama'),
+('Tidak boleh mengangkat beban berat'),
+('Membutuhkan lingkungan kerja tenang'),
+('Tidak cocok di suhu panas'),
+('Tidak cocok di suhu dingin'),
+('Alergi bahan kimia tertentu'),
+('Membutuhkan istirahat berkala');
+
+INSERT INTO hobby (hobby_name) VALUES
+('Seni'),
+('Musik'),
+('Menari'),
+('Kerajinan tangan'),
+('Berkebun'),
+('Memasak'),
+('Merawat hewan'),
+('Menggambar atau melukis'),
+('Teknologi dasar (komputer, tablet)'),
+('Fotografi'),
+('Lingkungan dan alam');
+
+INSERT INTO jobs (job_name, image, company_name, job_description, location, position, qualification, min_experience, job_type, salary) VALUES
+('Staff Packing', 'packing.jpg', 'PT Maju Bersama', 'Melakukan pengemasan produk dengan teliti dan rapi sesuai standar perusahaan', 'Jakarta Utara', 'Staff', 'Minimal SMP/Sederajat, Teliti dan dapat bekerja dalam tim', '0-1 tahun', 'Full Time', '3.000.000 - 4.000.000'),
+
+('Cleaning Service', 'cleaning.jpg', 'PT Bersih Sejahtera', 'Membersihkan dan menjaga kebersihan area kantor', 'Jakarta Selatan', 'Staff', 'Tidak ada syarat pendidikan khusus, Rajin dan bertanggung jawab', 'Fresh Graduate', 'Full Time', '2.500.000 - 3.500.000'),
+
+('Admin Gudang', 'warehouse.jpg', 'CV Sukses Makmur', 'Mengelola inventaris gudang dan mencatat keluar masuk barang', 'Bekasi', 'Staff', 'Minimal SMA/SMK, Teliti dan dapat mengoperasikan komputer', '1-2 tahun', 'Full Time', '4.000.000 - 5.000.000'),
+
+('Asisten Tukang Kue', 'bakery.jpg', 'Toko Roti Lezat', 'Membantu proses pembuatan kue dan roti', 'Depok', 'Assistant', 'Minimal SMP/Sederajat, Menyukai bidang kuliner', '0-1 tahun', 'Part Time', '2.000.000 - 3.000.000'),
+
+('Petugas Kebun', 'garden.jpg', 'PT Taman Indah', 'Merawat dan menjaga kebersihan taman perumahan', 'Tangerang', 'Staff', 'Tidak ada syarat pendidikan khusus, Rajin dan tekun', '1 tahun', 'Full Time', '3.500.000 - 4.500.000'),
+
+('Operator Produksi', 'production.jpg', 'PT Industri Maju', 'Mengoperasikan mesin produksi sederhana', 'Bogor', 'Operator', 'Minimal SMA/SMK, Dapat mengikuti instruksi dengan baik', '0-2 tahun', 'Full Time', '4.500.000 - 5.500.000'),
+
+('Asisten Dapur', 'kitchen.jpg', 'Restoran Selera', 'Membantu persiapan bahan makanan dan membersihkan peralatan dapur', 'Jakarta Barat', 'Assistant', 'Minimal SMP/Sederajat, Rajin dan bersih', 'Fresh Graduate', 'Full Time', '3.000.000 - 4.000.000'),
+
+('Petugas Laundry', 'laundry.jpg', 'Clean Laundry', 'Mencuci dan menyetrika pakaian pelanggan', 'Jakarta Timur', 'Staff', 'Minimal SMP/Sederajat, Teliti dan rapi', '0-1 tahun', 'Full Time', '2.800.000 - 3.800.000'),
+
+('Penjaga Toko', 'store.jpg', 'Minimarket Hemat', 'Melayani pelanggan dan menjaga kebersihan toko', 'Depok', 'Staff', 'Minimal SMA/SMK, Ramah dan jujur', '0-1 tahun', 'Full Time', '3.200.000 - 4.200.000'),
+
+('Helper Bengkel', 'workshop.jpg', 'Bengkel Jaya', 'Membantu mekanik dalam perbaikan kendaraan', 'Bekasi', 'Helper', 'Minimal SMP/Sederajat, Tertarik bidang otomotif', 'Fresh Graduate', 'Full Time', '2.500.000 - 3.500.000');
