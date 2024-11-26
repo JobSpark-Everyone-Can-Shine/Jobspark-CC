@@ -34,6 +34,10 @@ jobs:
       - name: Authorize Docker push
         run: gcloud auth configure-docker
 
+      - name: Login to Google Container Registry
+        run: |
+         gcloud auth configure-docker \ us-docker.pkg.dev
+
       - name: Build and Push Container
         run: |
           docker build -t gcr.io/jobspark/jobspark-api:${{ github.sha }} .
