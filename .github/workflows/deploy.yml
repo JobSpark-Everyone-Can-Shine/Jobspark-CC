@@ -36,8 +36,9 @@ jobs:
 
       - name: Build and Push Container
         run: |
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:${{ github.sha }} .
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:${{ github.sha }} -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:latest .
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:${{ github.sha }}
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/jobspark-api:latest
 
       # Deploy the container to Google Cloud Run
       - name: Deploy to Cloud Run
