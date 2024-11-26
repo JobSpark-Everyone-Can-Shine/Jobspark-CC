@@ -9,8 +9,7 @@ on:
 env:
   PROJECT_ID: jobspark
   SERVICE_NAME: jobspark-api
-  REGION: asia-southeast2
-  GAR_LOCATION: asia-southeast2
+  REGION: us
   REPOSITORY: gcr.io
 
 jobs:
