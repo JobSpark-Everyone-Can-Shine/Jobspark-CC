@@ -19,7 +19,7 @@ app.use(express.json());
 
 const apiRouter = express.Router();
 
-// list route
+// list routes
 apiRouter.use("/auth", auth);
 apiRouter.use("/upload", upload);
 apiRouter.use("/resume", resume);
@@ -29,7 +29,7 @@ apiRouter.use("/healthCon", healthCon);
 apiRouter.use("/jobs", jobs);
 apiRouter.use("/savedJobs", savedJobs);
 apiRouter.use("/jobHistory", jobHistory);
-// list route
+// list routes
 
 
 
