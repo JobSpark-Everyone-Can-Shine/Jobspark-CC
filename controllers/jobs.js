@@ -23,6 +23,7 @@ async function getJobs(req, res) {
         FROM jobs 
         ${filter}
       `;
+      
 
     const jobsQuery = `
         SELECT id, job_name, image, company_name, location, 
