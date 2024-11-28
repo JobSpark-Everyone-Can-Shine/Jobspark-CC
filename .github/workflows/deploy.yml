@@ -39,7 +39,7 @@ jobs:
       run: |
         gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
-    - name: Create test environment file
+    - name: Create environment file
       run: |
         echo "PORT=${{ secrets.PORT }}" >> .env
         echo "DB_USER=${{ secrets.DB_USER }}" >> .env
