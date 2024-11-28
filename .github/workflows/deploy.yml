@@ -39,6 +39,16 @@ jobs:
       run: |
         gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
+    - name: Create test environment file
+      run: |
+        echo "PORT=${{ secrets.PORT }}" >> .env
+        echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+        echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+        echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+        echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> .env
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+
     - name: Build and Push Container
       env:
         IMAGE_NAME: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}
