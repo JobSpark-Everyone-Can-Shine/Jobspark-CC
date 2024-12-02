@@ -49,7 +49,7 @@ jobs:
         echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> .env
         echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
         echo "MODEL_URL=${{ secrets.MODEL_URL }}" >> .env
-        echo "${{ secrets.GCP_SA_KEY2 }}" >> service-account-key.json
+        echo '${{ secrets.GCP_SA_KEY2 }}' > service-account-key.json
 
     - name: Build and Push Container
       env:
