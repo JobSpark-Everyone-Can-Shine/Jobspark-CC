@@ -3,10 +3,10 @@ const path = require("path");
 
 const storage = new Storage({
   keyFilename: path.join(__dirname, "../service-account-key.json"),
-  projectId: "ranggarsyprawira",
+  projectId: "jobspark",
 });
 
-const bucketName = "rangga_bucket";
+const bucketName = "jobspark";
 const bucket = storage.bucket(bucketName);
 
 module.exports = {
