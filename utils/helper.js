@@ -115,6 +115,24 @@ const formatBytes = (bytes, decimals = 2) => {
 };
 
 
+const checkAuth = async (req, res) => {
+  try {
+    const authHeader = req.header("Authorization");
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded.user;
+      return true
+    } catch (err) {
+      return "Invalid or expired token" 
+    }
+  } catch (error) {
+    return false
+  }
+};
+
 module.exports = {
   handleSuccess,
   handleSuccessPagination,
@@ -123,5 +141,6 @@ module.exports = {
   registerValidation,
   loginValidation,
   auth,
-  formatBytes
+  formatBytes,
+  checkAuth
 };

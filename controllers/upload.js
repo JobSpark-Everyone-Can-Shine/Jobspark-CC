@@ -10,7 +10,7 @@ const getIsDS = async (image) => {
     const blob = new Blob([image.buffer], { type: image.mimetype });
     formData.append("file", blob, image.originalname);
 
-    const response = await axios.post(`${baseURL}/predict/`, formData, {
+    const response = await axios.post(`${baseURL}/predict`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

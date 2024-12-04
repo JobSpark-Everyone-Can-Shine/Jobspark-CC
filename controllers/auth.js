@@ -263,6 +263,27 @@ async function insertUserWorkExperience(req, res) {
   }
 }
 
+
+async function getProfileFunc(req, res) {
+  try {
+    const user = await pool.query("SELECT * FROM users WHERE id = $1", [
+      req.user.id,
+    ]);
+
+    if (user.rows.length === 0) {
+      return handleFailed(res, "User not found", 404);
+    }
+
+    const userResponse = { ...user.rows[0] };
+    delete userResponse.password;
+
+    return userResponse
+  } catch (err) {
+    console.error(err.message);
+    return false;
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -270,5 +291,6 @@ module.exports = {
   getProfile,
   updateAbout,
   updatePassword,
-  insertUserWorkExperience
+  insertUserWorkExperience,
+  getProfileFunc
 };
