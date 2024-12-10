@@ -11,7 +11,6 @@ CREATE TABLE users (
     emergency_number VARCHAR(20),
     profile_img VARCHAR(255),
     hobby VARCHAR(50),
-    interest VARCHAR(50),
     special_ability VARCHAR(50),
     health_condition VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

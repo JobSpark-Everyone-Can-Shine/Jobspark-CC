@@ -28,7 +28,7 @@ async function getJobs(req, res) {
       const response = await axios(`${baseURL}/recommend`, {
         method: "POST",
         data: {
-          minat: profile.interest,
+          minat: profile.hobby,
           kemampuan: profile.special_ability,
           kondisi: profile.health_condition,
         },
