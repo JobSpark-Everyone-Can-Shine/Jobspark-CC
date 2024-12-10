@@ -23,7 +23,6 @@ async function register(req, res) {
       emergency_number,
       profile_img,
       hobby,
-      interest,
       special_ability,
       health_condition,
     } = req.body;
@@ -43,7 +42,7 @@ async function register(req, res) {
     const newUser = await pool.query(
       `INSERT INTO users (
               full_name, email, password, about_me, birth_date, gender,
-              address, emergency_number, profile_img, hobby, interest,
+              address, emergency_number, profile_img, hobby,
               special_ability, health_condition
           ) 
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
@@ -59,7 +58,6 @@ async function register(req, res) {
         emergency_number,
         profile_img,
         hobby,
-        interest,
         special_ability,
         health_condition,
       ]
