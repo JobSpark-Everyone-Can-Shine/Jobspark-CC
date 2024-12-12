@@ -63,3 +63,67 @@ JobSpark is a platform designed to empower individuals with Down syndrome by con
    - _Cloud Storage to store the data’s_
    - _Artifact Registry to store and manage repository_
    - _Cloud Run to deploy the registry._
+
+# Getting Started
+
+## Prerequisites
+- Node.js (version 18.x or higher)
+- npm (comes with Node.js)
+- Git (for cloning the repository)
+
+## Steps to Run
+
+1. Clone the project repository:
+```bash
+git clone https://github.com/JobSpark-Everyone-Can-Shine/Jobspark-CC.git jobspark-api
+cd jobspark-api
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+- Place your service-account-key.json file in the root directory
+- Look for a `.env.example` file in the project root
+- Create a new `.env` file based on `.env.example`
+```bash
+cp .env.example .env
+```
+- Update the `.env` file with your local configuration values
+
+4. Start the server:
+- For development (if using nodemon):
+```bash
+npm run dev
+```
+- For production:
+```bash
+npm start
+```
+
+## Common Issues and Solutions
+
+1. Port already in use:
+```bash
+lsof -i :[port-number]  
+kill -9 [PID]         
+```
+
+2. Missing dependencies:
+```bash
+npm install           
+npm ci               
+```
+
+3. Database connection issues:
+- Check if your database server is running
+- Verify database credentials in `.env` file
+- Ensure database exists and is accessible
+
+
+For project-specific instructions, check the project's README.md file.
+- Node.js (version 18.x or higher)
+- npm (usually comes with Node.js)
+- Basic knowledge of JavaScript and HTTP concepts
