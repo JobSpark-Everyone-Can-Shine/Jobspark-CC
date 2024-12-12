@@ -13,10 +13,12 @@ JobSpark is a platform designed to empower individuals with Down syndrome by con
 
 ## 🏆 Cloud Computing Members
 
-| No  | Name                          | Bangkit ID   | Learning Path    | University                          |
-| --- | ----------------------------- | ------------ | ---------------- | ----------------------------------- |
-| 1   | Rangga Arsy Prawira           | C193B4KY3686 | Machine Learning | Universitas Bina Satana Informatika |
-| 2   | Dhiya Bunga Syafina Ramadhani | C297B4KX1102 | Machine Learning | UPN "Veteran" Yogyakarta            |
+
+| No  | Name                          | Bangkit ID   | Learning Path    | University                          | Contacts                      |
+| --- | ----------------------------- | ------------ | ---------------- | ----------------------------------- | ------------------------------|
+| 1   | Rangga Arsy Prawira           | C193B4KY3686 | Machine Learning | Universitas Bina Satana Informatika | https://github.com/arsyrangga |
+| 2   | Dhiya Bunga Syafina Ramadhani | C297B4KX1102 | Machine Learning | UPN "Veteran" Yogyakarta            | https://github.com/dhiyabunga |
+
 
 ## 🔧 Technology and Tools
 
