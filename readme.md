@@ -4,7 +4,7 @@
 
 ![Cloud Computing](https://img.shields.io/badge/Cloud_Computing-%237F52FF?style=for-the-badge&logo=googlecloudstorage&logoColor=white) ![Visual Studio Code](https://img.shields.io/badge/Visual_Studio_Code-2196F3.svg?style=for-the-badge&logo=accenture&logoColor=white) ![Javascript](https://img.shields.io/badge/Javascript-E58800.svg?style=for-the-badge&logo=javascript&logoColor=white)
 
-   <img src='https://storage.googleapis.com/jobspark_public/preview2.jpg' style='width : 50%' />
+   <img src='https://storage.googleapis.com/jobspark_public/preview2.jpg' style='width : 70%' />
 </div>
 
 ## About
