@@ -9,6 +9,7 @@ const jobs = require("./routes/jobsRoutes");
 const resume = require("./routes/resumeRoutes");
 const savedJobs = require("./routes/savedJobsRoutes");
 const jobHistory = require("./routes/jobHistoryRoutes");
+const path = require('path');
 
 
 const app = express();
@@ -29,6 +30,8 @@ apiRouter.use("/healthCon", healthCon);
 apiRouter.use("/jobs", jobs);
 apiRouter.use("/savedJobs", savedJobs);
 apiRouter.use("/jobHistory", jobHistory);
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
 // list routes
 
 

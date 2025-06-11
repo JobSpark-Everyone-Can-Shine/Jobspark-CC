@@ -1,6 +1,5 @@
-
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -13,28 +12,30 @@ CREATE TABLE users (
     hobby VARCHAR(50),
     special_ability VARCHAR(50),
     health_condition VARCHAR(50),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    role VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_user_email ON "users"(email);
+
+-- CREATE INDEX idx_user_email ON users(email); -- ❌ Redundant karena email sudah UNIQUE
 
 CREATE TABLE hobby (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     hobby_name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE health_condition (
-    id SERIAL PRIMARY KEY,
-    health_condition VARCHAR(100) NOT NULL
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    health_condition VARCHAR(100) NOT NULL -- renamed column to avoid conflict
 );
 
 CREATE TABLE special_ability (
-    id SERIAL PRIMARY KEY,
-    special_ability VARCHAR(100) NOT NULL
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    special_ability VARCHAR(100) NOT NULL -- renamed column to avoid conflict
 );
 
 CREATE TABLE user_work_experience (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     job_title VARCHAR(255),
     company VARCHAR(255),
@@ -45,7 +46,8 @@ CREATE TABLE user_work_experience (
 );
 
 CREATE TABLE jobs (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT,
     job_name VARCHAR(100) NOT NULL,
     image VARCHAR(255),
     company_name VARCHAR(100) NOT NULL, 
@@ -60,15 +62,15 @@ CREATE TABLE jobs (
 );
 
 CREATE TABLE resume (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     file_size VARCHAR(50),
     file_path VARCHAR(255),
-    resume_name TEXT,
+    resume_name VARCHAR(255), -- changed from TEXT to allow indexing if needed
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE job_history (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     jobs_id INT,
     user_id INT,
     resume_id INT,
@@ -80,7 +82,7 @@ CREATE TABLE job_history (
 );
 
 CREATE TABLE saved_jobs (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     jobs_id INT,
     user_id INT,
     FOREIGN KEY (jobs_id) REFERENCES jobs(id),
@@ -88,11 +90,11 @@ CREATE TABLE saved_jobs (
 );
 
 CREATE TABLE IF NOT EXISTS invalidated_tokens (
-    token TEXT PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    invalidated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    token VARCHAR(255) PRIMARY KEY, -- changed from TEXT to VARCHAR(255)
+    user_id INT,
+    invalidated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
 
 INSERT INTO special_ability (special_ability) VALUES
 ('Membaca dasar'),

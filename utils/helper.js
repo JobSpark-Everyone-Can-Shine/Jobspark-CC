@@ -76,20 +76,17 @@ const auth = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    try {
-      const invalidatedToken = await pool.query(
-        "SELECT * FROM invalidated_tokens WHERE token = $1",
-        [token]
-      );
+    // Cek token apakah sudah di-blacklist
+    const [invalidatedToken] = await pool.query(
+      "SELECT * FROM invalidated_tokens WHERE token = ?",
+      [token]
+    );
 
-      if (invalidatedToken.rows.length > 0) {
-        return handleFailed(res, "Token has been invalidated", 401);
-      }
-    } catch (err) {
-      console.error(err.message);
-      return handleFailed(res);
+    if (invalidatedToken.length > 0) {
+      return handleFailed(res, "Token has been invalidated", 401);
     }
 
+    // Verifikasi token
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = decoded.user;
@@ -98,6 +95,7 @@ const auth = async (req, res, next) => {
       return handleFailed(res, "Invalid or expired token", 401);
     }
   } catch (error) {
+    console.error(error.message);
     return handleFailed(res, "Authentication error", 500);
   }
 };
@@ -133,6 +131,11 @@ const checkAuth = async (req, res) => {
   }
 };
 
+function formatDateToMySQL(dateStr) {
+  const [day, month, year] = dateStr.split("-");
+  return `${year}-${month}-${day}`;
+}
+
 module.exports = {
   handleSuccess,
   handleSuccessPagination,
@@ -142,5 +145,6 @@ module.exports = {
   loginValidation,
   auth,
   formatBytes,
-  checkAuth
+  checkAuth,
+  formatDateToMySQL
 };

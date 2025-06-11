@@ -3,56 +3,51 @@ const pool = require("../models/db");
 
 async function getSavedJobsList(_req, res) {
   try {
-    const savedJobs = await pool.query(`SELECT a.id, a.jobs_id, 
-      b.job_name, b.image, b.company_name, b.location, b.position, b.job_type, b.salary 
-      FROM saved_jobs a inner join jobs b on a.jobs_id = b.id`);
+    const [savedJobs] = await pool.query(`
+      SELECT a.id, a.jobs_id, 
+             b.job_name, b.image, b.company_name, 
+             b.location, b.position, b.job_type, b.salary 
+      FROM saved_jobs a 
+      INNER JOIN jobs b ON a.jobs_id = b.id
+    `);
 
-    if (savedJobs.rows.length === 0) {
+    if (savedJobs.length === 0) {
       return handleFailed(res, "No saved jobs found", 404, []);
     }
 
-    handleSuccess(res, savedJobs.rows);
+    handleSuccess(res, savedJobs);
   } catch (err) {
     console.error(err.message);
     return handleFailed(res);
   }
 }
 
-
 async function postSavedJobs(req, res) {
   try {
     const user_id = req.user.id;
     const { jobs_id } = req.body;
 
-
-
-    const jobExists = await pool.query("SELECT * FROM jobs WHERE id = $1", [
+    const [jobExists] = await pool.query("SELECT * FROM jobs WHERE id = ?", [
       jobs_id,
     ]);
 
-    if (jobExists.rows.length === 0) {
+    if (jobExists.length === 0) {
       return handleFailed(res, "Job not found", 404);
     }
 
-
-    const existingApplication = await pool.query(
-      "SELECT * FROM saved_jobs WHERE user_id = $1 AND jobs_id = $2",
+    const [existingApplication] = await pool.query(
+      "SELECT * FROM saved_jobs WHERE user_id = ? AND jobs_id = ?",
       [user_id, jobs_id]
     );
 
-    if (existingApplication.rows.length > 0) {
-      return handleFailed(res, "You have already Saved to this job", 400);
+    if (existingApplication.length > 0) {
+      return handleFailed(res, "You have already saved this job", 400);
     }
 
-
-
     await pool.query(
-      `INSERT INTO saved_jobs (jobs_id, user_id)  
-      VALUES ($1, $2);`,
+      "INSERT INTO saved_jobs (jobs_id, user_id) VALUES (?, ?)",
       [jobs_id, user_id]
     );
-
-    console.log(3)
 
     handleSuccess(res);
   } catch (err) {
@@ -61,28 +56,20 @@ async function postSavedJobs(req, res) {
   }
 }
 
-
-
 const deleteSavedJobs = async (req, res) => {
   try {
     const { id } = req.body;
 
-    const savedJobs = await pool.query(
-      `SELECT * FROM saved_jobs
-       WHERE id = $1`,
+    const [savedJobs] = await pool.query(
+      "SELECT * FROM saved_jobs WHERE id = ?",
       [id]
     );
 
-    if (savedJobs.rows.length === 0) {
+    if (savedJobs.length === 0) {
       return handleFailed(res, "Job not found", 404);
     }
 
-
-    await pool.query(
-      `DELETE FROM saved_jobs
-       WHERE id = $1`,
-      [id]
-    );
+    await pool.query("DELETE FROM saved_jobs WHERE id = ?", [id]);
 
     handleSuccess(res, { message: "Job deleted successfully" });
   } catch (error) {
@@ -91,9 +78,8 @@ const deleteSavedJobs = async (req, res) => {
   }
 };
 
-
 module.exports = {
   getSavedJobsList,
   postSavedJobs,
   deleteSavedJobs
-}
+};

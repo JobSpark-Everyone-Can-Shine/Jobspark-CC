@@ -1,8 +1,16 @@
-const axios = require("axios");
-const { bucket, bucketName } = require("../config/storage");
+const fs = require("fs");
+const path = require("path");
 const { handleSuccess, handleFailed } = require("../utils/helper");
+const axios = require("axios");
 
 const baseURL = process.env.MODEL_URL;
+
+// Membuat folder jika belum ada
+const ensureDirectoryExistence = (dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+};
 
 const getIsDS = async (image) => {
   try {
@@ -10,23 +18,12 @@ const getIsDS = async (image) => {
     const blob = new Blob([image.buffer], { type: image.mimetype });
     formData.append("file", blob, image.originalname);
 
-    const response = await axios.post(`${baseURL}/predict`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await axios.post(`${baseURL}/predict`, formData);
 
-    let isDs = false;
-
-    if (response.data.predicted_label == "Syndrome") {
-      isDs = true;
-    }
-
-    return {
-      isDs,
-    };
+    const isDs = response.data.predicted_label === "Syndrome";
+    return { isDs };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return error;
   }
 };
@@ -38,51 +35,26 @@ const uploadFile = async (req, res) => {
     }
 
     const data = await getIsDS(req.file);
-
     if (!data.isDs) {
       return handleFailed(res, "You are not down syndrome", 400);
     }
 
+    
+    
+    const uploadsDir = path.join(__dirname, "../public/uploads/jobspark");
+    ensureDirectoryExistence(uploadsDir);
+    
     const filename = `${Date.now()}-${req.file.originalname}`;
-    const destinationPath = `jobspark/${filename}`;
-    const blob = bucket.file(destinationPath);
-
-    return new Promise((resolve, reject) => {
-      const blobStream = blob.createWriteStream({
-        resumable: false,
-        metadata: {
-          contentType: req.file.mimetype,
-        },
-      });
-
-      blobStream.on("error", (error) => {
-        console.error("Upload error:", error);
-        blobStream.end();
-        reject(error);
-      });
-
-      blobStream.on("finish", () => {
-        const publicUrl = `https://storage.googleapis.com/${bucketName}/${destinationPath}`;
-        handleSuccess(res, { url: publicUrl });
-        resolve();
-      });
-
-      // Handle stream errors
-      blobStream.on("pipe", () => {
-        if (blobStream.destroyed) {
-          reject(new Error("Stream was destroyed"));
-          return;
-        }
-      });
-
-      blobStream.end(req.file.buffer);
-    }).catch((error) => {
-      console.error("Server error:", error);
-      handleFailed(res, "Unable to upload file", 500);
-    });
+    const filePath = path.join(uploadsDir, filename);
+    
+    fs.writeFileSync(filePath, req.file.buffer);
+    
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const publicUrl = `${baseUrl}/public/uploads/jobspark/${filename}`; // atau gunakan path relatif ke static folder
+    return handleSuccess(res, { url: publicUrl });
   } catch (error) {
     console.error("Server error:", error);
-    handleFailed(res);
+    return handleFailed(res, "Unable to upload file", 500);
   }
 };
 
@@ -92,33 +64,19 @@ const uploadResume = async (req, res) => {
       return handleFailed(res, "No file uploaded", 400);
     }
 
+    const resumesDir = path.join(__dirname, "../uploads/jobspark/resumes");
+    ensureDirectoryExistence(resumesDir);
+
     const filename = `${Date.now()}-${req.file.originalname}`;
-    const destinationPath = `jobspark/resumes/${filename}`;
+    const filePath = path.join(resumesDir, filename);
 
-    const blob = bucket.file(destinationPath);
-    const blobStream = blob.createWriteStream({
-      resumable: false,
-      metadata: {
-        contentType: req.file.mimetype,
-      },
-    });
+    fs.writeFileSync(filePath, req.file.buffer);
 
-    blobStream.on("error", (error) => {
-      console.error("Upload error:", error);
-      handleFailed(res, "Unable to upload file", 500);
-    });
-
-    blobStream.on("finish", () => {
-      const publicUrl = `https://storage.googleapis.com/${bucketName}/${destinationPath}`;
-      handleSuccess(res, {
-        url: publicUrl,
-      });
-    });
-
-    blobStream.end(req.file.buffer);
+    const publicUrl = `/uploads/jobspark/resumes/${filename}`;
+    return handleSuccess(res, { url: publicUrl });
   } catch (error) {
     console.error("Server error:", error);
-    handleFailed(res);
+    return handleFailed(res, "Unable to upload file", 500);
   }
 };
 

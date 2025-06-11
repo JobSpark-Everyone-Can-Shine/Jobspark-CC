@@ -3,7 +3,11 @@ const pool = require("../models/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
-const { handleSuccess, handleFailed } = require("../utils/helper");
+const {
+  handleSuccess,
+  handleFailed,
+  formatDateToMySQL,
+} = require("../utils/helper");
 
 async function register(req, res) {
   try {
@@ -27,26 +31,25 @@ async function register(req, res) {
       health_condition,
     } = req.body;
 
-    const userExists = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
+    console.log("req.body", req.body);
+    const [userExists] = await pool.query(
+      "SELECT * FROM users WHERE email = ?",
       [email]
     );
 
-    if (userExists.rows.length > 0) {
+    if (userExists.length > 0) {
       return handleFailed(res, "User already exists");
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = await pool.query(
+    const [insertResult] = await pool.query(
       `INSERT INTO users (
-              full_name, email, password, about_me, birth_date, gender,
-              address, emergency_number, profile_img, hobby,
-              special_ability, health_condition
-          ) 
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
-          RETURNING id, full_name, email, created_at`,
+        full_name, email, password, about_me, birth_date, gender,
+        address, emergency_number, profile_img, hobby,
+        special_ability, health_condition
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         full_name,
         email,
@@ -63,9 +66,14 @@ async function register(req, res) {
       ]
     );
 
+    const [newUserRows] = await pool.query(
+      "SELECT id, full_name, email, created_at FROM users WHERE id = ?",
+      [insertResult.insertId]
+    );
+
     const payload = {
       user: {
-        id: newUser.rows[0].id,
+        id: newUserRows[0].id,
       },
     };
 
@@ -75,7 +83,7 @@ async function register(req, res) {
       { expiresIn: "24h" },
       (err, token) => {
         if (err) throw err;
-        handleSuccess(res, { ...newUser.rows[0], token });
+        handleSuccess(res, { ...newUserRows[0], token });
       }
     );
   } catch (err) {
@@ -93,22 +101,22 @@ async function login(req, res) {
 
     const { email, password } = req.body;
 
-    const user = await pool.query("SELECT * FROM users WHERE email = $1", [
+    const [user] = await pool.query("SELECT * FROM users WHERE email = ?", [
       email,
     ]);
 
-    if (user.rows.length === 0) {
+    if (user.length === 0) {
       return handleFailed(res, "Invalid credentials", 400);
     }
 
-    const isMatch = await bcrypt.compare(password, user.rows[0].password);
+    const isMatch = await bcrypt.compare(password, user[0].password);
     if (!isMatch) {
       return handleFailed(res, "Invalid credentials", 400);
     }
 
     const payload = {
       user: {
-        id: user.rows[0].id,
+        id: user[0].id,
       },
     };
 
@@ -118,7 +126,7 @@ async function login(req, res) {
       { expiresIn: "24h" },
       (err, token) => {
         if (err) throw err;
-        const userResponse = { ...user.rows[0] };
+        const userResponse = { ...user[0] };
         delete userResponse.password;
         handleSuccess(res, { ...userResponse, token });
       }
@@ -139,15 +147,12 @@ async function logout(req, res) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       await pool.query(
-        `INSERT INTO invalidated_tokens (token, user_id) 
-               VALUES ($1, $2)
-               ON CONFLICT (token) DO NOTHING`,
+        `INSERT IGNORE INTO invalidated_tokens (token, user_id) VALUES (?, ?)`,
         [token, decoded.user.id]
       );
 
       await pool.query(
-        `DELETE FROM invalidated_tokens 
-               WHERE invalidated_at < NOW() - INTERVAL '24 hours'`
+        `DELETE FROM invalidated_tokens WHERE invalidated_at < NOW() - INTERVAL 24 HOUR`
       );
 
       handleSuccess(res, { message: "Successfully logged out" });
@@ -162,15 +167,15 @@ async function logout(req, res) {
 
 async function getProfile(req, res) {
   try {
-    const user = await pool.query("SELECT * FROM users WHERE id = $1", [
+    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
       req.user.id,
     ]);
 
-    if (user.rows.length === 0) {
+    if (user.length === 0) {
       return handleFailed(res, "User not found", 404);
     }
 
-    const userResponse = { ...user.rows[0] };
+    const userResponse = { ...user[0] };
     delete userResponse.password;
 
     handleSuccess(res, userResponse);
@@ -183,23 +188,22 @@ async function getProfile(req, res) {
 async function updateAbout(req, res) {
   try {
     const { about_me } = req.body;
-    const updateUser = await pool.query(
+    const [updateUser] = await pool.query(
       `UPDATE users 
-          SET 
-          about_me = COALESCE($1, about_me),
-          updated_at = CURRENT_TIMESTAMP
-          WHERE id = $2
-          RETURNING about_me`,
+       SET about_me = COALESCE(?, about_me), updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
       [about_me, req.user.id]
     );
 
-    if (updateUser.rows.length === 0) {
+    if (updateUser.affectedRows === 0) {
       return handleFailed(res, "Bad Request", 400);
     }
 
-    const userResponse = { ...updateUser.rows[0] };
-
-    handleSuccess(res, userResponse);
+    const [updatedUser] = await pool.query(
+      "SELECT about_me FROM users WHERE id = ?",
+      [req.user.id]
+    );
+    handleSuccess(res, updatedUser[0]);
   } catch (err) {
     console.error(err.message);
     handleFailed(res);
@@ -215,15 +219,15 @@ async function updatePassword(req, res) {
 
     const { old_password, new_password } = req.body;
 
-    const user = await pool.query("SELECT password FROM users WHERE id = $1", [
+    const [user] = await pool.query("SELECT password FROM users WHERE id = ?", [
       req.user.id,
     ]);
 
-    if (user.rows.length === 0) {
+    if (user.length === 0) {
       return handleFailed(res, "Bad Request", 400);
     }
 
-    const isMatch = await bcrypt.compare(old_password, user.rows[0].password);
+    const isMatch = await bcrypt.compare(old_password, user[0].password);
     if (!isMatch) {
       return handleFailed(res, "Password Not Same", 400);
     }
@@ -231,7 +235,7 @@ async function updatePassword(req, res) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(new_password, salt);
 
-    await pool.query("update users set password = $1 WHERE id = $2", [
+    await pool.query("UPDATE users SET password = ? WHERE id = ?", [
       hashedPassword,
       req.user.id,
     ]);
@@ -245,12 +249,14 @@ async function updatePassword(req, res) {
 
 async function insertUserWorkExperience(req, res) {
   try {
-    const  user_id  = req.user.id;
+    const user_id = req.user.id;
+    let { job_title, company, start_date, end_date, description } = req.body;
 
-    const { job_title, company, start_date, end_date, description } = req.body;
+    if (start_date) start_date = formatDateToMySQL(start_date);
+    if (end_date) end_date = formatDateToMySQL(end_date);
 
     await pool.query(
-      "INSERT INTO user_work_experience (user_id, job_title, company, start_date, end_date, description) VALUES ($1, $2, $3, $4, $5, $6)",
+      "INSERT INTO user_work_experience (user_id, job_title, company, start_date, end_date, description) VALUES (?, ?, ?, ?, ?, ?)",
       [user_id, job_title, company, start_date, end_date, description]
     );
 
@@ -261,21 +267,20 @@ async function insertUserWorkExperience(req, res) {
   }
 }
 
-
 async function getProfileFunc(req, res) {
   try {
-    const user = await pool.query("SELECT * FROM users WHERE id = $1", [
+    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
       req.user.id,
     ]);
 
-    if (user.rows.length === 0) {
+    if (user.length === 0) {
       return handleFailed(res, "User not found", 404);
     }
 
-    const userResponse = { ...user.rows[0] };
+    const userResponse = { ...user[0] };
     delete userResponse.password;
 
-    return userResponse
+    return userResponse;
   } catch (err) {
     console.error(err.message);
     return false;
@@ -290,5 +295,5 @@ module.exports = {
   updateAbout,
   updatePassword,
   insertUserWorkExperience,
-  getProfileFunc
+  getProfileFunc,
 };
