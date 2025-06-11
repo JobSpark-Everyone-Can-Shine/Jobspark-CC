@@ -5,6 +5,7 @@ const axios = require("axios");
 
 const baseURL = process.env.MODEL_URL;
 
+
 // Membuat folder jika belum ada
 const ensureDirectoryExistence = (dir) => {
   if (!fs.existsSync(dir)) {
@@ -49,7 +50,7 @@ const uploadFile = async (req, res) => {
     
     fs.writeFileSync(filePath, req.file.buffer);
     
-    const baseUrl = req.protocol + "://" + req.get("host");
+    const baseUrl = process.env.BASE_URL;
     const publicUrl = `${baseUrl}/public/uploads/jobspark/${filename}`; // atau gunakan path relatif ke static folder
     return handleSuccess(res, { url: publicUrl });
   } catch (error) {

@@ -4,6 +4,7 @@ const { handleSuccess, handleFailed, formatBytes } = require("../utils/helper");
 const pool = require("../models/db");
 
 const UPLOAD_DIR = path.join(__dirname, "../public/uploads/jobspark/resumes");
+const baseUrl = process.env.BASE_URL;
 
 const ensureDirectoryExistence = (dir) => {
   if (!fs.existsSync(dir)) {
@@ -13,7 +14,6 @@ const ensureDirectoryExistence = (dir) => {
 
 const uploadResume = async (req, res) => {
   try {
-    const baseUrl = req.protocol + "://" + req.get("host");
     if (!req.file) {
       return handleFailed(res, "No file uploaded", 400);
     }
