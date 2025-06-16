@@ -48,7 +48,7 @@ async function register(req, res) {
       `INSERT INTO users (
         full_name, email, password, about_me, birth_date, gender,
         address, emergency_number, profile_img, hobby,
-        special_ability, health_condition
+        special_ability, health_condition, role
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         full_name,
@@ -63,6 +63,7 @@ async function register(req, res) {
         hobby,
         special_ability,
         health_condition,
+        "user"
       ]
     );
 
