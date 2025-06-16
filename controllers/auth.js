@@ -49,7 +49,7 @@ async function register(req, res) {
         full_name, email, password, about_me, birth_date, gender,
         address, emergency_number, profile_img, hobby,
         special_ability, health_condition, role
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         full_name,
         email,
