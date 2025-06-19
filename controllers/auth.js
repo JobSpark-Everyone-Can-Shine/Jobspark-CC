@@ -303,7 +303,7 @@ async function getCompanyList(req, res) {
     const offset = (page - 1) * limit;
 
     // Build the query
-    let query = "SELECT id, full_name, profile_img FROM users WHERE role = ?";
+    let query = "SELECT id, full_name as company_name, profile_img FROM users WHERE role = ?";
     const queryParams = ["admin"];
 
     // Add name filter if provided
