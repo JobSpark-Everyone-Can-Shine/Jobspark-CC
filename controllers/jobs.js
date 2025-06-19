@@ -32,28 +32,32 @@ async function getJobs(req, res) {
         },
       });
 
-      const jobNameList = response.data?.data?.map(e => e.Nama_Pekerjaan) || [];
-      const companyNameList = response.data?.data?.map(e => e.Perusahaan) || [];
+      const jobNameList =
+        response.data?.data?.map((e) => e.Nama_Pekerjaan) || [];
+      const companyNameList =
+        response.data?.data?.map((e) => e.Perusahaan) || [];
 
       if (jobNameList.length === 0) {
         return handleFailedPagination(res, "No job recommendations found", 404);
       }
 
-      const placeholdersJob = jobNameList.map(() => '?').join(',');
-      const placeholdersCompany = companyNameList.map(() => '?').join(',');
+      const placeholdersJob = jobNameList.map(() => "?").join(",");
+      const placeholdersCompany = companyNameList.map(() => "?").join(",");
 
       const jobsQuery = `
-        SELECT id, job_name, image, company_name, location, 
-               position, job_type, salary
-        FROM jobs
+        SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, 
+               a.position, a.job_type, a.salary
+        FROM jobs a
+        inner join users b
+        on a.company_id = b.id
         WHERE job_name IN (${placeholdersJob}) AND company_name IN (${placeholdersCompany})
         ORDER BY created_at DESC
       `;
 
-      const [rows] = await pool.query(
-        jobsQuery,
-        [...jobNameList, ...companyNameList]
-      );
+      const [rows] = await pool.query(jobsQuery, [
+        ...jobNameList,
+        ...companyNameList,
+      ]);
 
       if (rows.length === 0) {
         return handleFailedPagination(res, "Jobs Is Empty", 404);
@@ -69,11 +73,10 @@ async function getJobs(req, res) {
       return handleSuccessPagination(res, rows, paginationInfo);
     } else {
       if (search) {
-        const likeSearch = `%${search}%`;
         filter = `
-          WHERE job_name LIKE ? 
-             OR company_name LIKE ? 
-             OR job_description LIKE ?
+          WHERE a.job_name LIKE ? 
+             OR b.full_name as company_name LIKE ? 
+             OR a.job_description LIKE ?
         `;
       }
 
@@ -84,11 +87,13 @@ async function getJobs(req, res) {
       `;
 
       const jobsQuery = `
-        SELECT id, job_name, image, company_name, location, 
-               position, job_type, salary
-        FROM jobs
+        SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, 
+               a.position, a.job_type, a.salary
+        FROM jobs a
+        inner join users b
+        on a.company_id = b.id
         ${filter}
-        ORDER BY created_at DESC
+        ORDER BY a.created_at DESC
         LIMIT ?
         OFFSET ?
       `;
@@ -97,9 +102,7 @@ async function getJobs(req, res) {
         ? [likeSearch, likeSearch, likeSearch, parseInt(limit), offset]
         : [parseInt(limit), offset];
 
-      const countParams = search
-        ? [likeSearch, likeSearch, likeSearch]
-        : [];
+      const countParams = search ? [likeSearch, likeSearch, likeSearch] : [];
 
       const [[totalCountResult], [rows]] = await Promise.all([
         pool.query(totalCountQuery, countParams),
@@ -127,6 +130,136 @@ async function getJobs(req, res) {
   }
 }
 
+async function getJobAdmin(req, res) {
+  try {
+    const id = req.user.id;
+    const role = req.user.role;
+     if (role !== "admin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+    const [rows] = await pool.query(
+      "SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, a.position, a.job_type, a.salary from jobs a inner join users b on a.company_id = b.id WHERE company_id = ? and status = ?",
+      [id, "ACTIVE"]
+    );
+
+    if (rows.length === 0) {
+      return handleFailed(res, "Job Not Found", 404, {});
+    }
+
+    handleSuccess(res, rows);
+  } catch (err) {
+    console.error(err.message);
+    return handleFailed(res);
+  }
+}
+
+async function getJobDetailAdmin(req, res) {
+  try{
+    const id = req.params.id
+    const role = req.user.role;
+    if (role !== "admin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+
+    const [applicant] = await pool.query(
+      `SELECT a.id, a.status, a.applied_at, b.full_name, b.health_condition, b.hobby, b.special_ability, c.file_path as resume_path FROM job_history a 
+      inner join users b 
+      on a.user_id = b.id 
+      inner join resume c 
+      on a.resume_id = c.id 
+      inner join jobs d
+      on a.jobs_id = d.id
+      WHERE d.id = ?`,
+      [id]
+    );
+
+    const [rows] = await pool.query(
+      `SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, a.position, a.job_type, a.salary from jobs a 
+      inner join users b 
+      on a.company_id = b.id 
+      WHERE a.id = ? and status = ?`,
+      [id, "ACTIVE"]
+    );
+
+    if (rows.length === 0) {
+      return handleFailed(res, "Job Not Found", 404, {});
+    }
+
+    handleSuccess(res, {...rows[0], applicant});
+  } catch(err) {
+    console.error(err.message);
+    return handleFailed(res);
+  }
+}
+
+async function setStatusJobApplicationAdmin(req, res) {
+  try{
+    const {id, status} = req.body;
+    const role = req.user.role;
+    if (role !== "admin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+
+    if(status !== "APPROVE" && status !== "REJECT") {
+      return handleFailed(res, "Status Not Valid", 400);
+    }
+
+    await pool.query("UPDATE job_history SET status = ? WHERE id = ?", [status, id]);
+    handleSuccess(res, "Set Status Success");
+  } catch(err) {
+    console.error(err.message);
+    return handleFailed(res);
+  }
+}
+
+async function insertJobAdmin(req, res) {
+  try {
+    const id = req.user.id;
+    const role = req.user.role;
+    const {
+      job_name,
+      image,
+      job_description,
+      location,
+      position,
+      qualification,
+      min_experience,
+      job_type,
+      salary,
+    } = req.body;
+
+    if (role !== "admin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+
+    const [rows] = await pool.query(
+      "INSERT INTO jobs (company_id, job_name, image, job_description, location, position, qualification, min_experience, job_type, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, job_name, image, job_description, location, position, qualification, min_experience, job_type, salary]
+    );
+
+    handleSuccess(res, "Insert Success");
+  } catch (err) {
+    console.error(err.message);
+    return handleFailed(res);
+  }
+}
+
+async function deleteJobAdmin(req, res) {
+  try {
+    const id = req.params.id;
+    const role = req.user.role;
+    const company_id = req.user.id;
+    if(role !== "admin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+    await pool.query("DELETE FROM jobs WHERE id = ? and company_id = ?", [id, company_id]);
+    handleSuccess(res, "Delete Success");
+  } catch (err) {
+    console.error(err.message);
+    return handleFailed(res);
+  }
+}
+
 async function getJobDetail(req, res) {
   try {
     const id = req.params.id;
@@ -148,7 +281,9 @@ async function applyJob(req, res) {
     const user_id = req.user.id;
     const { jobs_id, resume_id } = req.body;
 
-    const [[jobExists]] = await pool.query("SELECT * FROM jobs WHERE id = ?", [jobs_id]);
+    const [[jobExists]] = await pool.query("SELECT * FROM jobs WHERE id = ?", [
+      jobs_id,
+    ]);
 
     if (!jobExists) {
       return handleFailed(res, "Job not found", 404);
@@ -185,4 +320,9 @@ module.exports = {
   getJobs,
   getJobDetail,
   applyJob,
+  getJobAdmin,
+  insertJobAdmin,
+  deleteJobAdmin,
+  getJobDetailAdmin,
+  setStatusJobApplicationAdmin
 };

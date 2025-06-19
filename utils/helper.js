@@ -57,6 +57,14 @@ const registerValidation = [
   body("profile_img").optional().isURL(),
 ];
 
+const registerAdminValidation = [
+  body("full_name").not().isEmpty().trim().escape(),
+  body("email").isEmail().normalizeEmail(),
+  body("password").isLength({ min: 6 }),
+  body("emergency_number").optional().isMobilePhone(),
+  body("profile_img").optional().isURL(),
+];
+
 const loginValidation = [
   body("email").isEmail().normalizeEmail(),
   body("password").not().isEmpty(),
@@ -146,5 +154,6 @@ module.exports = {
   auth,
   formatBytes,
   checkAuth,
-  formatDateToMySQL
+  formatDateToMySQL,
+  registerAdminValidation
 };

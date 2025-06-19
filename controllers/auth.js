@@ -7,6 +7,7 @@ const {
   handleSuccess,
   handleFailed,
   formatDateToMySQL,
+  handleSuccessPagination,
 } = require("../utils/helper");
 
 async function register(req, res) {
@@ -63,7 +64,7 @@ async function register(req, res) {
         hobby,
         special_ability,
         health_condition,
-        "user"
+        "user",
       ]
     );
 
@@ -118,6 +119,7 @@ async function login(req, res) {
     const payload = {
       user: {
         id: user[0].id,
+        role: user[0].role,
       },
     };
 
@@ -288,6 +290,258 @@ async function getProfileFunc(req, res) {
   }
 }
 
+// superadmin
+async function getCompanyList(req, res) {
+  try {
+    const role = req.user.role;
+    if (role !== "superadmin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+
+    // Get query parameters
+    const { page = 1, limit = 10, name = "" } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Build the query
+    let query = "SELECT id, full_name, profile_img FROM users WHERE role = ?";
+    const queryParams = ["admin"];
+
+    // Add name filter if provided
+    if (name) {
+      query += " AND full_name LIKE ?";
+      queryParams.push(`%${name}%`);
+    }
+
+    // Add pagination
+    query += " LIMIT ? OFFSET ?";
+    queryParams.push(parseInt(limit), parseInt(offset));
+
+    // Get paginated data
+    const [users] = await pool.query(query, queryParams);
+
+    if (users.length === 0) {
+      return handleFailed(res, "Company not found", 404);
+    }
+
+    // Get total count for pagination info
+    let countQuery = "SELECT COUNT(*) as total FROM users WHERE role = ?";
+    const countParams = ["admin"];
+
+    if (name) {
+      countQuery += " AND full_name LIKE ?";
+      countParams.push(`%${name}%`);
+    }
+
+    const [totalCount] = await pool.query(countQuery, countParams);
+    const total = totalCount[0].total;
+
+    const pagination = {
+      total: total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(total / limit),
+    };
+
+    handleSuccessPagination(res, users, pagination);
+  } catch (err) {
+    console.error(err.message);
+    return handleFailed(res);
+  }
+}
+
+async function registerCompany(req, res) {
+  try {
+    const role = req.user.role;
+    if (role !== "superadmin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const {
+      full_name,
+      email,
+      password,
+      address,
+      emergency_number,
+      profile_img,
+    } = req.body;
+
+    console.log("req.body", req.body);
+    const [userExists] = await pool.query(
+      "SELECT * FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (userExists.length > 0) {
+      return handleFailed(res, "User already exists");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const [insertResult] = await pool.query(
+      `INSERT INTO users (
+        full_name, email, password,
+        address, emergency_number, profile_img, role
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        full_name,
+        email,
+        hashedPassword,
+        address,
+        emergency_number,
+        profile_img,
+        "admin",
+      ]
+    );
+
+    const [newUserRows] = await pool.query(
+      "SELECT id, full_name, email, created_at FROM users WHERE id = ?",
+      [insertResult.insertId]
+    );
+
+    const payload = {
+      user: {
+        id: newUserRows[0].id,
+      },
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" },
+      (err, token) => {
+        if (err) throw err;
+        handleSuccess(res, { ...newUserRows[0], token });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    handleFailed(res, err.message);
+  }
+}
+
+async function detailCompanyAdmin(req, res) {
+  try {
+    const role = req.user.role;
+    const id = req.params.id;
+    if (role !== "superadmin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+
+    const [company] = await pool.query(
+      "SELECT id, full_name as company_name, email, address, emergency_number as phone, profile_img FROM users WHERE id = ? and role = ?",
+      [id, "admin"]
+    );
+
+    console.log(id);
+
+    if (company.length === 0) {
+      return handleFailed(res, "company not found", 404);
+    }
+
+    handleSuccess(res, company[0]);
+  } catch (err) {
+    console.error(err.message);
+    return handleFailed(res);
+  }
+}
+
+async function deleteCompanyAdmin(req, res) {
+  try{
+    const role = req.user.role;
+    if (role !== "superadmin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+    const id = req.params.id;
+    await pool.query("DELETE FROM users WHERE id = ?", [id]);
+    handleSuccess(res, "Company deleted successfully");
+  }catch(err){
+    console.error(err.message);
+    return handleFailed(res);
+  }
+}
+
+async function updateCompanyDetail(req, res) {
+  try {
+    const role = req.user.role;
+    if (role !== "superadmin") {
+      return handleFailed(res, "Unauthorized", 401);
+    }
+    const { full_name, email, address, emergency_number, profile_img } =
+      req.body;
+
+    // Ambil data user lama
+    const [oldUserResult] = await pool.query(
+      "SELECT email FROM users WHERE id = ?",
+      [req.params.id]
+    );
+    const oldUser = oldUserResult[0];
+
+    // Siapkan parameter dan query dinamis
+    let query = "UPDATE users SET ";
+    const params = [];
+    const updates = [];
+
+    // Tambahkan field yang akan diupdate
+    if (full_name !== undefined) {
+      updates.push("full_name = ?");
+      params.push(full_name);
+    }
+
+    console.log(email, oldUser.email)
+
+    // Hanya update email jika berbeda dengan yang lama dan tidak undefined
+    if (email !== undefined && email !== oldUser.email) {
+      updates.push("email = ?");
+      params.push(email);
+    }
+
+    if (address !== undefined) {
+      updates.push("address = ?");
+      params.push(address);
+    }
+
+    if (emergency_number !== undefined) {
+      updates.push("emergency_number = ?");
+      params.push(emergency_number);
+    }
+
+    if (profile_img !== undefined) {
+      updates.push("profile_img = ?");
+      params.push(profile_img);
+    }
+
+    // Jika tidak ada field yang diupdate, kembalikan error
+    if (updates.length === 0) {
+      return handleFailed(res, "No fields to update", 400);
+    }
+
+    // Tambahkan updated_at dan where clause
+    updates.push("updated_at = CURRENT_TIMESTAMP");
+    query += updates.join(", ") + " WHERE id = ?";
+    params.push(req.user.id);
+
+    // Eksekusi query
+    const [updateUser] = await pool.query(query, params);
+
+    if (updateUser.affectedRows === 0) {
+      return handleFailed(res, "Bad Request", 400);
+    }
+
+    handleSuccess(res, "");
+  } catch (err) {
+    console.error(err.message);
+    if(err.message.includes(err.message)) return handleFailed(res, "Email Sudah Terdaftar", 400);
+    handleFailed(res);
+  }
+}
+
+// superadmin
+
 module.exports = {
   register,
   login,
@@ -297,4 +551,9 @@ module.exports = {
   updatePassword,
   insertUserWorkExperience,
   getProfileFunc,
+  getCompanyList,
+  registerCompany,
+  detailCompanyAdmin,
+  updateCompanyDetail,
+  deleteCompanyAdmin
 };
