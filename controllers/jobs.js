@@ -50,7 +50,7 @@ async function getJobs(req, res) {
         FROM jobs a
         inner join users b
         on a.company_id = b.id
-        WHERE job_name IN (${placeholdersJob}) AND company_name IN (${placeholdersCompany})
+        WHERE job_name IN (${placeholdersJob}) AND company_name IN (${placeholdersCompany}) and status = 'ACTIVE'
         ORDER BY created_at DESC
       `;
 
@@ -77,6 +77,7 @@ async function getJobs(req, res) {
           WHERE a.job_name LIKE ? 
              OR b.full_name as company_name LIKE ? 
              OR a.job_description LIKE ?
+          and status = 'ACTIVE'
         `;
       }
 
@@ -252,7 +253,7 @@ async function deleteJobAdmin(req, res) {
     if(role !== "admin") {
       return handleFailed(res, "Unauthorized", 401);
     }
-    await pool.query("DELETE FROM jobs WHERE id = ? and company_id = ?", [id, company_id]);
+    await pool.query("UPDATE jobs SET status = ? WHERE id = ? and company_id = ?", ["INACTIVE", id, company_id]);
     handleSuccess(res, "Delete Success");
   } catch (err) {
     console.error(err.message);
