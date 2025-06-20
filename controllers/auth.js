@@ -371,19 +371,7 @@ async function registerCompany(req, res) {
 
     console.log("req.body", req.body);
 
-    console.log("EMBEL EMBEL", `INSERT INTO users (
-        full_name, email, password,
-        address, emergency_number, profile_img, role
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        full_name,
-        email,
-        hashedPassword,
-        address,
-        emergency_number,
-        profile_img,
-        "admin",
-      ])
+
     const [userExists] = await pool.query(
       "SELECT * FROM users WHERE email = ?",
       [email]
@@ -411,6 +399,20 @@ async function registerCompany(req, res) {
         "admin",
       ]
     );
+
+        console.log("EMBEL EMBEL", `INSERT INTO users (
+        full_name, email, password,
+        address, emergency_number, profile_img, role
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        full_name,
+        email,
+        hashedPassword,
+        address,
+        emergency_number,
+        profile_img,
+        "admin",
+      ])
 
     const [newUserRows] = await pool.query(
       "SELECT id, full_name, email, created_at FROM users WHERE id = ?",
