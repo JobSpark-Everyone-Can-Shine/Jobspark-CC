@@ -303,8 +303,8 @@ async function getCompanyList(req, res) {
     const offset = (page - 1) * limit;
 
     // Build the query
-    let query = "SELECT id, full_name as company_name, profile_img FROM users WHERE role = ?";
-    const queryParams = ["admin"];
+    let query = "SELECT id, full_name as company_name, profile_img FROM users WHERE role = ? AND STATUS = ?";
+    const queryParams = ["admin", "ACTIVE"];
 
     // Add name filter if provided
     if (name) {
@@ -324,8 +324,8 @@ async function getCompanyList(req, res) {
     }
 
     // Get total count for pagination info
-    let countQuery = "SELECT COUNT(*) as total FROM users WHERE role = ?";
-    const countParams = ["admin"];
+    let countQuery = "SELECT COUNT(*) as total FROM users WHERE role = ? and STATUS = ?";
+    const countParams = ["admin", "ACTIVE"];
 
     if (name) {
       countQuery += " AND full_name LIKE ?";
