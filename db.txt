@@ -13,6 +13,7 @@ CREATE TABLE users (
     special_ability VARCHAR(50),
     health_condition VARCHAR(50),
     role VARCHAR(50),
+    status VARCHAR(50) default 'ACTIVE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

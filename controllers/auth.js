@@ -457,7 +457,7 @@ async function deleteCompanyAdmin(req, res) {
       return handleFailed(res, "Unauthorized", 401);
     }
     const id = req.params.id;
-    await pool.query("DELETE FROM users WHERE id = ?", [id]);
+    await pool.query("update users set status = ? WHERE id = ?", ["INACTIVE", id]);
     handleSuccess(res, "Company deleted successfully");
   }catch(err){
     console.error(err.message);
