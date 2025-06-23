@@ -175,7 +175,7 @@ async function getJobDetailAdmin(req, res) {
     );
 
     const [rows] = await pool.query(
-      `SELECT a.id, a.job_name, a.job_description, a.image, b.full_name as company_name, a.location, a.min_experience, a.position, a.job_type, a.salary from jobs a 
+      `SELECT a.id, a.job_name, a.job_description, a.image, b.full_name as company_name, a.location, a.min_experience, a.position, a.job_type, a.salary, a.created_at from jobs a 
       inner join users b 
       on a.company_id = b.id 
       WHERE a.id = ? and status = ?`,
