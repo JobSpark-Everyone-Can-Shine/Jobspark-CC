@@ -527,7 +527,7 @@ async function updateCompanyDetail(req, res) {
     // Tambahkan updated_at dan where clause
     updates.push("updated_at = CURRENT_TIMESTAMP");
     query += updates.join(", ") + " WHERE id = ?";
-    params.push(req.user.id);
+    params.push(req.params.id);
 
     // Eksekusi query
     const [updateUser] = await pool.query(query, params);
