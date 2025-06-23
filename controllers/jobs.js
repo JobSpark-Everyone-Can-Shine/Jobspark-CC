@@ -178,7 +178,7 @@ async function getJobDetailAdmin(req, res) {
       `SELECT a.id, a.job_name, a.job_description, a.image, b.full_name as company_name, a.location, a.min_experience, a.position, a.job_type, a.salary, a.created_at from jobs a 
       inner join users b 
       on a.company_id = b.id 
-      WHERE a.id = ? and status = ?`,
+      WHERE a.id = ? and a.status = ?`,
       [id, "ACTIVE"]
     );
 
