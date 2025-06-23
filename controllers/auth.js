@@ -303,7 +303,8 @@ async function getCompanyList(req, res) {
     const offset = (page - 1) * limit;
 
     // Build the query
-    let query = "SELECT id, full_name as company_name, profile_img FROM users WHERE role = ? AND STATUS = ?";
+    let query =
+      "SELECT id, full_name as company_name, profile_img FROM users WHERE role = ? AND STATUS = ?";
     const queryParams = ["admin", "ACTIVE"];
 
     // Add name filter if provided
@@ -324,7 +325,8 @@ async function getCompanyList(req, res) {
     }
 
     // Get total count for pagination info
-    let countQuery = "SELECT COUNT(*) as total FROM users WHERE role = ? and STATUS = ?";
+    let countQuery =
+      "SELECT COUNT(*) as total FROM users WHERE role = ? and STATUS = ?";
     const countParams = ["admin", "ACTIVE"];
 
     if (name) {
@@ -369,9 +371,6 @@ async function registerCompany(req, res) {
       profile_img,
     } = req.body;
 
-    console.log("req.body", req.body);
-
-
     const [userExists] = await pool.query(
       "SELECT * FROM users WHERE email = ?",
       [email]
@@ -399,20 +398,6 @@ async function registerCompany(req, res) {
         "admin",
       ]
     );
-
-        console.log("EMBEL EMBEL", `INSERT INTO users (
-        full_name, email, password,
-        address, emergency_number, profile_img, role
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        full_name,
-        email,
-        hashedPassword,
-        address,
-        emergency_number,
-        profile_img,
-        "admin",
-      ])
 
     const [newUserRows] = await pool.query(
       "SELECT id, full_name, email, created_at FROM users WHERE id = ?",
@@ -467,15 +452,18 @@ async function detailCompanyAdmin(req, res) {
 }
 
 async function deleteCompanyAdmin(req, res) {
-  try{
+  try {
     const role = req.user.role;
     if (role !== "superadmin") {
       return handleFailed(res, "Unauthorized", 401);
     }
     const id = req.params.id;
-    await pool.query("update users set status = ? WHERE id = ?", ["INACTIVE", id]);
+    await pool.query("update users set status = ? WHERE id = ?", [
+      "INACTIVE",
+      id,
+    ]);
     handleSuccess(res, "Company deleted successfully");
-  }catch(err){
+  } catch (err) {
     console.error(err.message);
     return handleFailed(res);
   }
@@ -508,7 +496,7 @@ async function updateCompanyDetail(req, res) {
       params.push(full_name);
     }
 
-    console.log(email, oldUser.email)
+    console.log(email, oldUser.email);
 
     // Hanya update email jika berbeda dengan yang lama dan tidak undefined
     if (email !== undefined && email !== oldUser.email) {
@@ -551,7 +539,8 @@ async function updateCompanyDetail(req, res) {
     handleSuccess(res, "");
   } catch (err) {
     console.error(err.message);
-    if(err.message.includes(err.message)) return handleFailed(res, "Email Sudah Terdaftar", 400);
+    if (err.message.includes(err.message))
+      return handleFailed(res, "Email Sudah Terdaftar", 400);
     handleFailed(res);
   }
 }
@@ -571,5 +560,5 @@ module.exports = {
   registerCompany,
   detailCompanyAdmin,
   updateCompanyDetail,
-  deleteCompanyAdmin
+  deleteCompanyAdmin,
 };

@@ -139,7 +139,7 @@ async function getJobAdmin(req, res) {
       return handleFailed(res, "Unauthorized", 401);
     }
     const [rows] = await pool.query(
-      "SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, a.position, a.job_type, a.salary from jobs a inner join users b on a.company_id = b.id WHERE company_id = ? and status = ?",
+      "SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, a.position, a.job_type, a.salary from jobs a inner join users b on a.company_id = b.id WHERE a.company_id = ? and a.status = ?",
       [id, "ACTIVE"]
     );
 
