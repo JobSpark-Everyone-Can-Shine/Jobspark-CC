@@ -5,6 +5,7 @@ const {
   loginValidation,
   auth,
   registerAdminValidation,
+  updateAdminValidation,
 } = require("../utils/helper");
 const authController = require("../controllers/auth");
 
@@ -19,7 +20,7 @@ router.put("/profile/password", auth, authController.updatePassword);
 router.get("/company/list", auth, authController.getCompanyList);
 router.post("/superAdmin/registerAdmin", auth, registerAdminValidation, authController.registerCompany);
 router.get("/superAdmin/company/detail/:id", auth, authController.detailCompanyAdmin)
-router.put("/superAdmin/updateCompanyDetail/:id", auth, registerAdminValidation, authController.updateCompanyDetail);
+router.put("/superAdmin/updateCompanyDetail/:id", auth, updateAdminValidation, authController.updateCompanyDetail);
 router.delete("/superAdmin/deleteCompany/:id", auth, authController.deleteCompanyAdmin);
 
   

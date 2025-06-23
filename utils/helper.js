@@ -65,6 +65,13 @@ const registerAdminValidation = [
   body("profile_img").optional().isURL(),
 ];
 
+const updateAdminValidation = [
+  body("full_name").not().isEmpty().trim().escape(),
+  body("email").isEmail().normalizeEmail(),
+  body("emergency_number").optional().isMobilePhone(),
+  body("profile_img").optional().isURL(),
+];
+
 const loginValidation = [
   body("email").isEmail().normalizeEmail(),
   body("password").not().isEmpty(),
@@ -155,5 +162,6 @@ module.exports = {
   formatBytes,
   checkAuth,
   formatDateToMySQL,
-  registerAdminValidation
+  registerAdminValidation,
+  updateAdminValidation
 };
