@@ -99,6 +99,8 @@ async function getJobs(req, res) {
         OFFSET ?
       `;
 
+      console.log(jobsQuery)
+
       const queryParams = search
         ? [likeSearch, likeSearch, likeSearch, parseInt(limit), offset]
         : [parseInt(limit), offset];
