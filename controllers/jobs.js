@@ -50,7 +50,7 @@ async function getJobs(req, res) {
         FROM jobs a
         inner join users b
         on a.company_id = b.id
-        WHERE job_name IN (${placeholdersJob}) AND company_name IN (${placeholdersCompany}) and status = 'ACTIVE'
+        WHERE job_name IN (${placeholdersJob}) AND company_name IN (${placeholdersCompany}) and a.status = 'ACTIVE'
         ORDER BY created_at DESC
       `;
 
@@ -74,15 +74,14 @@ async function getJobs(req, res) {
     } else {
       if (search) {
         filter = `
-          WHERE a.job_name LIKE ? 
+          and a.job_name LIKE ? 
              OR b.full_name as company_name LIKE ? 
-             OR a.job_description LIKE ?
-          and status = 'ACTIVE'
+             OR a.job_description LIKE ?'
         `;
       }
 
       const totalCountQuery = `
-        SELECT COUNT(*) as count 
+        SELECT COUNT(*) as count where status = 'ACTIVE' 
         FROM jobs 
         ${filter}
       `;
@@ -93,6 +92,7 @@ async function getJobs(req, res) {
         FROM jobs a
         inner join users b
         on a.company_id = b.id
+        where a.status = 'ACTIVE'
         ${filter}
         ORDER BY a.created_at DESC
         LIMIT ?
