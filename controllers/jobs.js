@@ -75,14 +75,14 @@ async function getJobs(req, res) {
       if (search) {
         filter = `
           and a.job_name LIKE ? 
-             OR b.full_name as company_name LIKE ? 
+             OR b.full_name LIKE ? 
              OR a.job_description LIKE ?'
         `;
       }
 
       const totalCountQuery = `
-        SELECT COUNT(*) as count where status = 'ACTIVE' 
-        FROM jobs 
+        SELECT COUNT(*) as count  
+        FROM jobs where status = 'ACTIVE'
         ${filter}
       `;
 
