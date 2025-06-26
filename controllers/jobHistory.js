@@ -13,7 +13,7 @@ async function getHJobHist(req, res) {
         b.position, b.job_type, b.salary 
       FROM job_history a 
       INNER JOIN jobs b ON a.jobs_id = b.id
-      INNER JOIN resume c ON a.resume_id = c.id,
+      INNER JOIN resume c ON a.resume_id = c.id
       INNER JOIN users d ON a.user_id = d.id
       WHERE a.user_id = ?
     `,
