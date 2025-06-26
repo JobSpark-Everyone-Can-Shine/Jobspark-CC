@@ -32,6 +32,15 @@ async function getJobs(req, res) {
         },
       });
 
+      console.log({
+        method: "POST",
+        data: {
+          minat: profile.hobby,
+          kemampuan: profile.special_ability,
+          kondisi: profile.health_condition,
+        },
+      }, "TEH");
+
       const jobNameList =
         response.data?.data?.map((e) => e.Nama_Pekerjaan) || [];
       const companyNameList =
@@ -99,7 +108,7 @@ async function getJobs(req, res) {
         OFFSET ?
       `;
 
-      console.log(jobsQuery)
+      console.log(jobsQuery);
 
       const queryParams = search
         ? [likeSearch, likeSearch, likeSearch, parseInt(limit), offset]
@@ -137,7 +146,7 @@ async function getJobAdmin(req, res) {
   try {
     const id = req.user.id;
     const role = req.user.role;
-     if (role !== "admin") {
+    if (role !== "admin") {
       return handleFailed(res, "Unauthorized", 401);
     }
     const [rows] = await pool.query(
@@ -157,8 +166,8 @@ async function getJobAdmin(req, res) {
 }
 
 async function getJobDetailAdmin(req, res) {
-  try{
-    const id = req.params.id
+  try {
+    const id = req.params.id;
     const role = req.user.role;
     if (role !== "admin") {
       return handleFailed(res, "Unauthorized", 401);
@@ -188,28 +197,31 @@ async function getJobDetailAdmin(req, res) {
       return handleFailed(res, "Job Not Found", 404, {});
     }
 
-    handleSuccess(res, {...rows[0], applicant});
-  } catch(err) {
+    handleSuccess(res, { ...rows[0], applicant });
+  } catch (err) {
     console.error(err.message);
     return handleFailed(res);
   }
 }
 
 async function setStatusJobApplicationAdmin(req, res) {
-  try{
-    const {id, status} = req.body;
+  try {
+    const { id, status } = req.body;
     const role = req.user.role;
     if (role !== "admin") {
       return handleFailed(res, "Unauthorized", 401);
     }
 
-    if(status !== "APPROVE" && status !== "REJECT") {
+    if (status !== "APPROVE" && status !== "REJECT") {
       return handleFailed(res, "Status Not Valid", 400);
     }
 
-    await pool.query("UPDATE job_history SET status = ? WHERE id = ?", [status, id]);
+    await pool.query("UPDATE job_history SET status = ? WHERE id = ?", [
+      status,
+      id,
+    ]);
     handleSuccess(res, "Set Status Success");
-  } catch(err) {
+  } catch (err) {
     console.error(err.message);
     return handleFailed(res);
   }
@@ -237,7 +249,18 @@ async function insertJobAdmin(req, res) {
 
     const [rows] = await pool.query(
       "INSERT INTO jobs (company_id, job_name, image, job_description, location, position, qualification, min_experience, job_type, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [id, job_name, image, job_description, location, position, qualification, min_experience, job_type, salary]
+      [
+        id,
+        job_name,
+        image,
+        job_description,
+        location,
+        position,
+        qualification,
+        min_experience,
+        job_type,
+        salary,
+      ]
     );
 
     handleSuccess(res, "Insert Success");
@@ -252,10 +275,13 @@ async function deleteJobAdmin(req, res) {
     const id = req.params.id;
     const role = req.user.role;
     const company_id = req.user.id;
-    if(role !== "admin") {
+    if (role !== "admin") {
       return handleFailed(res, "Unauthorized", 401);
     }
-    await pool.query("UPDATE jobs SET status = ? WHERE id = ? and company_id = ?", ["INACTIVE", id, company_id]);
+    await pool.query(
+      "UPDATE jobs SET status = ? WHERE id = ? and company_id = ?",
+      ["INACTIVE", id, company_id]
+    );
     handleSuccess(res, "Delete Success");
   } catch (err) {
     console.error(err.message);
@@ -327,5 +353,5 @@ module.exports = {
   insertJobAdmin,
   deleteJobAdmin,
   getJobDetailAdmin,
-  setStatusJobApplicationAdmin
+  setStatusJobApplicationAdmin,
 };
