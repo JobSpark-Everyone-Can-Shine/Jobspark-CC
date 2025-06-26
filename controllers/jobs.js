@@ -50,7 +50,7 @@ async function getJobs(req, res) {
         FROM jobs a
         inner join users b
         on a.company_id = b.id
-        WHERE job_name IN (${placeholdersJob}) AND company_name IN (${placeholdersCompany}) and a.status = 'ACTIVE'
+        WHERE a.job_name IN (${placeholdersJob}) AND b.full_name IN (${placeholdersCompany}) and a.status = 'ACTIVE'
         ORDER BY created_at DESC
       `;
 
