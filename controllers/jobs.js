@@ -13,6 +13,7 @@ const baseURL = process.env.MODEL_URL;
 async function getJobs(req, res) {
   const { search, page = 1, limit = 10 } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit) || 0;
+  const natural = require('natural');
   let filter = "";
 
   try {
@@ -22,64 +23,47 @@ async function getJobs(req, res) {
     }
 
     if (isAuth && !search) {
-      const profile = await getProfileFunc(req, res);
-      const response = await axios(`${baseURL}/recommend`, {
-        method: "POST",
-        data: {
-          minat: profile.hobby,
-          kemampuan: profile.special_ability,
-          kondisi: profile.health_condition,
-        },
-      });
+     const profile = await getProfileFunc(req, res);
 
-      console.log({
-        method: "POST",
-        data: {
-          minat: profile.hobby,
-          kemampuan: profile.special_ability,
-          kondisi: profile.health_condition,
-        },
-      }, "TEH");
+    const userProfile = `${profile.hobby || ""} ${profile.special_ability || ""} ${profile.health_condition || ""}`;
 
-      const jobNameList =
-        response.data?.data?.map((e) => e.Nama_Pekerjaan) || [];
-      const companyNameList =
-        response.data?.data?.map((e) => e.Perusahaan) || [];
+    // Ambil semua jobs dari database
+    const [jobs] = await pool.query(`
+      SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, 
+             a.position, a.job_type, a.salary, a.job_description, a.qualification
+      FROM jobs a
+      INNER JOIN users b ON a.company_id = b.id
+      WHERE a.status = 'ACTIVE'
+    `);
 
-      if (jobNameList.length === 0) {
-        return handleFailedPagination(res, "No job recommendations found", 404);
-      }
+    if (jobs.length === 0) {
+      return handleFailedPagination(res, "Jobs Is Empty", 404);
+    }
 
-      const placeholdersJob = jobNameList.map(() => "?").join(",");
-      const placeholdersCompany = companyNameList.map(() => "?").join(",");
+    // Hitung similarity dengan user profile
+    const tfidf = new natural.TfIdf();
+    tfidf.addDocument(userProfile);
 
-      const jobsQuery = `
-        SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, 
-               a.position, a.job_type, a.salary
-        FROM jobs a
-        inner join users b
-        on a.company_id = b.id
-        WHERE a.job_name IN (${placeholdersJob}) AND b.full_name IN (${placeholdersCompany}) and a.status = 'ACTIVE'
-        ORDER BY a.created_at DESC
-      `;
+    const jobRanked = jobs.map(job => {
+      const jobText = `${job.job_name || ""} ${job.job_description || ""} ${job.qualification || ""}`;
+      tfidf.addDocument(jobText);
+      const similarity = tfidf.tfidf(jobText, 0); // Compare job to user (doc 0)
+      return { ...job, similarity };
+    });
 
-      const [rows] = await pool.query(jobsQuery, [
-        ...jobNameList,
-        ...companyNameList,
-      ]);
+    // Urutkan berdasarkan similarity
+    const sortedJobs = jobRanked
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(offset, offset + parseInt(limit));
 
-      if (rows.length === 0) {
-        return handleFailedPagination(res, "Jobs Is Empty", 404);
-      }
+    const paginationInfo = {
+      total_data: jobRanked.length,
+      total_pages: Math.ceil(jobRanked.length / parseInt(limit)),
+      current_page: parseInt(page),
+      limit: parseInt(limit),
+    };
 
-      const paginationInfo = {
-        total_data: rows.length,
-        total_pages: 1,
-        current_page: 1,
-        limit: 9999,
-      };
-
-      return handleSuccessPagination(res, rows, paginationInfo);
+    return handleSuccessPagination(res, sortedJobs, paginationInfo);
     } else {
       if (search) {
         filter = `
