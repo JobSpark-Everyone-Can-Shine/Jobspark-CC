@@ -13,7 +13,7 @@ const baseURL = process.env.MODEL_URL;
 async function getJobs(req, res) {
   const { search, page = 1, limit = 10 } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit) || 0;
-  const natural = require('natural');
+  const natural = require("natural");
   let filter = "";
 
   try {
@@ -23,47 +23,71 @@ async function getJobs(req, res) {
     }
 
     if (isAuth && !search) {
-     const profile = await getProfileFunc(req, res);
+      const profile = await getProfileFunc(req, res);
 
-    const userProfile = `${profile.hobby || ""} ${profile.special_ability || ""} ${profile.health_condition || ""}`;
+      const userProfile = `${profile.hobby || ""} ${
+        profile.special_ability || ""
+      } ${profile.health_condition || ""}`;
 
-    // Ambil semua jobs dari database
-    const [jobs] = await pool.query(`
-      SELECT a.id, a.job_name, a.image, b.full_name as company_name, a.location, 
-             a.position, a.job_type, a.salary, a.job_description, a.qualification
-      FROM jobs a
-      INNER JOIN users b ON a.company_id = b.id
-      WHERE a.status = 'ACTIVE'
-    `);
+      // Ambil semua jobs dari database
+      const [jobs] = await pool.query(
+        `
+      SELECT 
+    a.id, 
+    a.job_name, 
+    a.image, 
+    b.full_name AS company_name, 
+    a.location, 
+    a.position, 
+    a.job_type, 
+    a.salary, 
+    a.job_description, 
+    a.qualification,
+    CASE 
+        WHEN jh.jobs_id IS NOT NULL THEN TRUE
+        ELSE FALSE
+    END AS is_applied
+FROM jobs a
+INNER JOIN users b 
+    ON a.company_id = b.id
+LEFT JOIN job_history jh 
+    ON jh.jobs_id = a.id 
+    AND jh.user_id = ?
+WHERE a.status = 'ACTIVE'
+    `,
+        [profile.id]
+      );
 
-    if (jobs.length === 0) {
-      return handleFailedPagination(res, "Jobs Is Empty", 404);
-    }
+      if (jobs.length === 0) {
+        return handleFailedPagination(res, "Jobs Is Empty", 404);
+      }
 
-    // Hitung similarity dengan user profile
-    const tfidf = new natural.TfIdf();
-    tfidf.addDocument(userProfile);
+      // Hitung similarity dengan user profile
+      const tfidf = new natural.TfIdf();
+      tfidf.addDocument(userProfile);
 
-    const jobRanked = jobs.map(job => {
-      const jobText = `${job.job_name || ""} ${job.job_description || ""} ${job.qualification || ""}`;
-      tfidf.addDocument(jobText);
-      const similarity = tfidf.tfidf(jobText, 0); // Compare job to user (doc 0)
-      return { ...job, similarity };
-    });
+      const jobRanked = jobs.map((job) => {
+        const jobText = `${job.job_name || ""} ${job.job_description || ""} ${
+          job.qualification || ""
+        }`;
+        tfidf.addDocument(jobText);
+        const similarity = tfidf.tfidf(jobText, 0); // Compare job to user (doc 0)
+        return { ...job, similarity };
+      });
 
-    // Urutkan berdasarkan similarity
-    const sortedJobs = jobRanked
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(offset, offset + parseInt(limit));
+      // Urutkan berdasarkan similarity
+      const sortedJobs = jobRanked
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(offset, offset + parseInt(limit));
 
-    const paginationInfo = {
-      total_data: jobRanked.length,
-      total_pages: Math.ceil(jobRanked.length / parseInt(limit)),
-      current_page: parseInt(page),
-      limit: parseInt(limit),
-    };
+      const paginationInfo = {
+        total_data: jobRanked.length,
+        total_pages: Math.ceil(jobRanked.length / parseInt(limit)),
+        current_page: parseInt(page),
+        limit: parseInt(limit),
+      };
 
-    return handleSuccessPagination(res, sortedJobs, paginationInfo);
+      return handleSuccessPagination(res, sortedJobs, paginationInfo);
     } else {
       if (search) {
         filter = `
@@ -276,7 +300,35 @@ async function deleteJobAdmin(req, res) {
 async function getJobDetail(req, res) {
   try {
     const id = req.params.id;
-    const [rows] = await pool.query("SELECT a.job_name, b.full_name as company_name, a.image, a.job_description, a.location, a.position, a.qualification, a.min_experience, a.job_type, a.salary, a.created_at FROM jobs a inner join users b on a.company_id = b.id WHERE a.id = ?", [id]);
+    const profile = await getProfileFunc(req, res);
+    const [rows] = await pool.query(
+      `
+    SELECT 
+        a.job_name, 
+        b.full_name AS company_name, 
+        a.image, 
+        a.job_description, 
+        a.location, 
+        a.position, 
+        a.qualification, 
+        a.min_experience, 
+        a.job_type, 
+        a.salary, 
+        a.created_at,
+        CASE 
+            WHEN jh.jobs_id IS NOT NULL THEN TRUE
+            ELSE FALSE
+        END AS is_applied
+    FROM jobs a
+    INNER JOIN users b 
+        ON a.company_id = b.id
+    LEFT JOIN job_history jh 
+        ON jh.jobs_id = a.id 
+        AND jh.user_id = ?
+    WHERE a.id = ?
+`,
+      [profile.id, id]
+    );
 
     if (rows.length === 0) {
       return handleFailed(res, "Job Not Found", 404, {});
