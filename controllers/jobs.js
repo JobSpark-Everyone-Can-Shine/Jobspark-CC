@@ -276,7 +276,7 @@ async function deleteJobAdmin(req, res) {
 async function getJobDetail(req, res) {
   try {
     const id = req.params.id;
-    const [rows] = await pool.query("SELECT * FROM jobs WHERE id = ?", [id]);
+    const [rows] = await pool.query("SELECT a.job_name, b.full_name as company_name, a.image, a.job_description, a.location, a.position, a.qualification, a.min_experience, a.job_type, a.salary, a.created_at FROM jobs a inner join users b on a.company_id = b.id WHERE a.id = ?", [id]);
 
     if (rows.length === 0) {
       return handleFailed(res, "Job Not Found", 404, {});
