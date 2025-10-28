@@ -42,7 +42,7 @@ async function postChat(req, res) {
 
     await pool.query("insert into chat (message, name) values (?, ?)", [message, name]);
 
-    handleSuccess(res, { id: rows.insertId, message, name });
+    handleSuccess(res, "Insert Success");
   } catch (err) {
     console.error(err.message);
     return handleFailed(res);
