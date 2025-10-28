@@ -5,7 +5,7 @@ const healthConController = require("../controllers/healthCon");
 
 router.get("/", auth, healthConController.healthCon);
 router.get("/getChat", healthConController.getChat);
-router.get("/postChat", healthConController.postChat);
+router.post("/postChat", healthConController.postChat);
 
 module.exports = router;
 
